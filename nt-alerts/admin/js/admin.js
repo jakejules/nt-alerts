@@ -226,6 +226,7 @@
 		reason: '',
 		dept: '',
 		internalReason: '',
+		internalNotes: '',
 		closedStops: [],
 		alternateStops: [],
 		images: [],   // [{id, url, thumbnail}]
@@ -462,6 +463,12 @@
 			form.querySelectorAll('.nt-choice--internal-reason').forEach(function (b) {
 				b.setAttribute('aria-checked', (b.getAttribute('data-internal-reason') || '') === formState.internalReason ? 'true' : 'false');
 			});
+		}
+
+		var notesEl = document.getElementById('nt-internal-notes');
+		if (notesEl && data.internal_notes) {
+			notesEl.value = data.internal_notes;
+			formState.internalNotes = data.internal_notes;
 		}
 	}
 
@@ -928,9 +935,11 @@
 		var descEl = document.getElementById('nt-alert-description');
 
 		var vehicleEl = document.getElementById('nt-vehicle-number');
+		var notesEl = document.getElementById('nt-internal-notes');
 		var dept = formState.dept || '';
 		var vehicleNumber = (dept === 'maintenance' && vehicleEl) ? vehicleEl.value.trim() : '';
 		var internalReason = (dept === 'maintenance') ? (formState.internalReason || '') : '';
+		var internalNotes = notesEl ? notesEl.value.trim() : '';
 
 		return {
 			alert_type:       alertType,
@@ -947,7 +956,8 @@
 			images:           formState.images.map(function (img) { return img.id; }),
 			dept_responsible: dept,
 			vehicle_number:   vehicleNumber,
-			internal_reason:  internalReason
+			internal_reason:  internalReason,
+			internal_notes:   internalNotes
 		};
 	}
 
