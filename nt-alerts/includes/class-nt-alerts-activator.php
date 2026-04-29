@@ -8,12 +8,88 @@ final class NT_Alerts_Activator {
 	public static function activate() {
 		self::ensure_role_and_caps();
 		self::seed_options();
+		self::maybe_upgrade();
 
 		if ( class_exists( 'NT_Alerts_Cron' ) ) {
 			NT_Alerts_Cron::schedule_all();
 		}
 
 		flush_rewrite_rules();
+	}
+
+	/**
+	 * Run any one-time data migrations needed by the current plugin version.
+	 * Idempotent and gated by sentinel options; safe to call on every admin
+	 * page load.
+	 */
+	public static function maybe_upgrade() {
+		if ( '1' !== (string) get_option( 'nt_alerts_routes_split_v2', '' ) ) {
+			self::migrate_route_groups();
+			update_option( 'nt_alerts_routes_split_v2', '1' );
+		}
+	}
+
+	/**
+	 * Split the legacy "Regional & Campus Links" group into "Fort Erie /
+	 * Port Colborne" (routes 22, 25, 751) and "Regional Bus" (everything
+	 * else). Preserves any other groups and any per-route customizations
+	 * an admin has made.
+	 */
+	private static function migrate_route_groups() {
+		$catalogue = get_option( 'nt_alerts_routes', null );
+		if ( ! is_array( $catalogue ) || empty( $catalogue ) ) {
+			return;
+		}
+
+		$fort_erie_ids = array( '22', '25', '751' );
+		$out           = array();
+		$changed       = false;
+
+		foreach ( $catalogue as $group ) {
+			if ( ! is_array( $group ) || empty( $group['group'] ) || empty( $group['routes'] ) || ! is_array( $group['routes'] ) ) {
+				$out[] = $group;
+				continue;
+			}
+
+			if ( 'Regional & Campus Links' !== (string) $group['group'] ) {
+				$out[] = $group;
+				continue;
+			}
+
+			$fort = array();
+			$rest = array();
+			foreach ( $group['routes'] as $r ) {
+				if ( ! is_array( $r ) || empty( $r['id'] ) ) {
+					continue;
+				}
+				if ( in_array( (string) $r['id'], $fort_erie_ids, true ) ) {
+					$fort[] = $r;
+				} else {
+					$rest[] = $r;
+				}
+			}
+
+			if ( ! empty( $fort ) ) {
+				$out[] = array(
+					'group'  => __( 'Fort Erie / Port Colborne', 'nt-alerts' ),
+					'routes' => $fort,
+				);
+			}
+			if ( ! empty( $rest ) ) {
+				$out[] = array(
+					'group'  => __( 'Regional Bus', 'nt-alerts' ),
+					'routes' => $rest,
+				);
+			}
+			$changed = true;
+		}
+
+		if ( $changed ) {
+			update_option( 'nt_alerts_routes', $out );
+			if ( class_exists( 'NT_Alerts_Alert' ) ) {
+				NT_Alerts_Alert::flush_routes_lookup();
+			}
+		}
 	}
 
 	public static function deactivate() {
@@ -208,10 +284,17 @@ final class NT_Alerts_Activator {
 			),
 
 			array(
-				'group'  => __( 'Regional & Campus Links', 'nt-alerts' ),
+				'group'  => __( 'Fort Erie / Port Colborne', 'nt-alerts' ),
 				'routes' => array(
-					array( 'id' => '22',  'label' => 'Route 22 — Fort Erie Link',                              'color' => '#db5e2c' ),
-					array( 'id' => '25',  'label' => 'Route 25 — Port Colborne Link',                         'color' => '#ffffff' ),
+					array( 'id' => '22',  'label' => 'Route 22 — Fort Erie Link',          'color' => '#db5e2c' ),
+					array( 'id' => '25',  'label' => 'Route 25 — Port Colborne Link',      'color' => '#ffffff' ),
+					array( 'id' => '751', 'label' => 'Route 751 — Fort Erie Community Bus','color' => '#007a56' ),
+				),
+			),
+
+			array(
+				'group'  => __( 'Regional Bus', 'nt-alerts' ),
+				'routes' => array(
 					array( 'id' => '34',  'label' => 'Route 34 — Niagara College Campus Link',                'color' => '#943734' ),
 					array( 'id' => '40',  'label' => 'Route 40 — Niagara College NOTL Campus',                'color' => '#4f809e' ),
 					array( 'id' => '45',  'label' => 'Route 45 — Niagara College NOTL Campus',                'color' => '#4f809e' ),
@@ -222,7 +305,6 @@ final class NT_Alerts_Activator {
 					array( 'id' => '70',  'label' => 'Route 70 — Brock / Niagara College Welland',            'color' => '#00a3ae' ),
 					array( 'id' => '75',  'label' => 'Route 75 — Brock University / St. Catharines',          'color' => '#00a3ae' ),
 					array( 'id' => '438', 'label' => 'Route 438 — GO Train Station Connection',               'color' => '#4e6128' ),
-					array( 'id' => '751', 'label' => 'Route 751 — Fort Erie Community Bus',                   'color' => '#007a56' ),
 				),
 			),
 		);

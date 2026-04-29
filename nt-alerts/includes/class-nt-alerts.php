@@ -18,6 +18,7 @@ final class NT_Alerts {
 
 	public function boot() {
 		add_action( 'init', array( $this, 'load_textdomain' ), 1 );
+		add_action( 'admin_init', array( 'NT_Alerts_Activator', 'maybe_upgrade' ) );
 
 		NT_Alerts_Roles::register_hooks();
 		NT_Alerts_CPT::register_hooks();
