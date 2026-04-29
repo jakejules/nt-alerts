@@ -232,6 +232,10 @@
 		title.textContent = alert.title || (CATEGORY_LABEL[alert.category] || 'Service alert');
 		article.appendChild(title);
 
+		if (alert.alert_type === 'long_term') {
+			article.appendChild(renderDates(alert));
+		}
+
 		if (alert.description) {
 			var desc = document.createElement('p');
 			desc.className = 'nt-alerts-widget__description';
@@ -295,7 +299,9 @@
 		}
 		p.appendChild(posted);
 
-		if (alert.expires_at) {
+		// Long-term alerts already show start/end in the prominent block above.
+		var isLong = alert.alert_type === 'long_term';
+		if (alert.expires_at && !isLong) {
 			var sep = document.createTextNode(' — ');
 			p.appendChild(sep);
 			var exp = document.createElement('time');
@@ -306,6 +312,58 @@
 		}
 
 		return p;
+	}
+
+	function renderDates(alert) {
+		var wrap = document.createElement('div');
+		wrap.className = 'nt-alerts-widget__dates';
+		wrap.setAttribute('aria-label', 'Active dates');
+
+		var startIso = alert.start_time || alert.posted_at || '';
+		wrap.appendChild(buildDateBlock('Start', startIso, false));
+
+		var arrow = document.createElement('span');
+		arrow.className = 'nt-alerts-widget__date-arrow';
+		arrow.setAttribute('aria-hidden', 'true');
+		arrow.textContent = '→';
+		wrap.appendChild(arrow);
+
+		wrap.appendChild(buildDateBlock('End', alert.expires_at || '', true));
+
+		return wrap;
+	}
+
+	function buildDateBlock(label, iso, openIfMissing) {
+		var block = document.createElement('div');
+		block.className = 'nt-alerts-widget__date';
+
+		var lab = document.createElement('span');
+		lab.className = 'nt-alerts-widget__date-label';
+		lab.textContent = label;
+		block.appendChild(lab);
+
+		if (iso) {
+			var t = document.createElement('time');
+			t.className = 'nt-alerts-widget__date-value';
+			t.dateTime = iso;
+			t.textContent = formatDateOnly(iso);
+			t.setAttribute('aria-label', label + ' ' + formatVerbose(iso));
+			block.appendChild(t);
+		} else {
+			var span = document.createElement('span');
+			span.className = 'nt-alerts-widget__date-value nt-alerts-widget__date-value--open';
+			span.textContent = openIfMissing ? 'No end date' : '—';
+			block.appendChild(span);
+		}
+
+		return block;
+	}
+
+	function formatDateOnly(iso) {
+		if (!iso) return '';
+		var d = new Date(iso);
+		if (isNaN(d.getTime())) return iso;
+		return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 	}
 
 	function buildRouteChips(routes) {
