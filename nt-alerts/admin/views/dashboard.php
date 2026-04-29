@@ -82,6 +82,8 @@ function nt_alerts_render_card( $alert, $show_actions ) {
 	$posted    = isset( $alert['posted_at'] ) ? $alert['posted_at'] : '';
 	$expires   = isset( $alert['expires_at'] ) ? $alert['expires_at'] : '';
 	$posted_by = isset( $alert['posted_by']['name'] ) ? (string) $alert['posted_by']['name'] : '';
+	$is_long   = isset( $alert['alert_type'] ) && 'long_term' === $alert['alert_type'];
+	$start_iso = isset( $alert['start_time'] ) && '' !== $alert['start_time'] ? $alert['start_time'] : $posted;
 	?>
 	<article class="nt-alerts-card nt-alerts-card--<?php echo esc_attr( $severity ); ?>"
 	         data-alert-id="<?php echo esc_attr( $id ); ?>"
@@ -101,6 +103,30 @@ function nt_alerts_render_card( $alert, $show_actions ) {
 		<h3 id="nt-alert-<?php echo esc_attr( $id ); ?>-title" class="nt-alerts-card__title">
 			<?php echo esc_html( $title ); ?>
 		</h3>
+
+		<?php if ( $is_long ) : ?>
+			<div class="nt-alerts-card__dates" aria-label="<?php esc_attr_e( 'Active dates', 'nt-alerts' ); ?>">
+				<div class="nt-alerts-card__date">
+					<span class="nt-alerts-card__date-label"><?php esc_html_e( 'Start', 'nt-alerts' ); ?></span>
+					<time class="nt-alerts-card__date-value" datetime="<?php echo esc_attr( $start_iso ); ?>">
+						<?php echo esc_html( nt_alerts_friendly_date( $start_iso ) ); ?>
+					</time>
+				</div>
+				<span class="nt-alerts-card__date-arrow" aria-hidden="true">→</span>
+				<div class="nt-alerts-card__date">
+					<span class="nt-alerts-card__date-label"><?php esc_html_e( 'End', 'nt-alerts' ); ?></span>
+					<?php if ( $expires ) : ?>
+						<time class="nt-alerts-card__date-value" datetime="<?php echo esc_attr( $expires ); ?>">
+							<?php echo esc_html( nt_alerts_friendly_date( $expires ) ); ?>
+						</time>
+					<?php else : ?>
+						<span class="nt-alerts-card__date-value nt-alerts-card__date-value--open">
+							<?php esc_html_e( 'No end date', 'nt-alerts' ); ?>
+						</span>
+					<?php endif; ?>
+				</div>
+			</div>
+		<?php endif; ?>
 
 		<?php if ( $desc ) : ?>
 			<p class="nt-alerts-card__desc"><?php echo esc_html( $desc ); ?></p>
@@ -241,10 +267,10 @@ function nt_alerts_render_card( $alert, $show_actions ) {
 				);
 			}
 			?>
-			<span class="nt-alerts-card__times-sep" data-role="times-sep" <?php echo $expires ? '' : 'hidden'; ?>> · </span>
+			<span class="nt-alerts-card__times-sep" data-role="times-sep" <?php echo ( $expires && ! $is_long ) ? '' : 'hidden'; ?>> · </span>
 			<span class="nt-alerts-card__expiry-display"
 			      data-role="expiry-display"
-			      <?php echo $expires ? '' : 'hidden'; ?>>
+			      <?php echo ( $expires && ! $is_long ) ? '' : 'hidden'; ?>>
 				<?php
 				if ( $expires ) {
 					printf(
@@ -282,6 +308,17 @@ function nt_alerts_render_card( $alert, $show_actions ) {
 		<?php endif; ?>
 	</article>
 	<?php
+}
+
+function nt_alerts_friendly_date( $iso ) {
+	if ( ! $iso ) {
+		return '';
+	}
+	$ts = strtotime( $iso );
+	if ( false === $ts ) {
+		return $iso;
+	}
+	return wp_date( get_option( 'date_format', 'M j, Y' ), $ts );
 }
 
 function nt_alerts_friendly_time( $iso ) {
