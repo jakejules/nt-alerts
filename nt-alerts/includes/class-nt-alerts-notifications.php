@@ -127,8 +127,9 @@ final class NT_Alerts_Notifications {
 		$dept_key = isset( $alert['dept_responsible'] ) ? $alert['dept_responsible'] : '';
 		$veh      = isset( $alert['vehicle_number'] )   ? $alert['vehicle_number']   : '';
 		$ir_key   = isset( $alert['internal_reason'] )  ? $alert['internal_reason']  : '';
+		$notes    = isset( $alert['internal_notes'] )   ? $alert['internal_notes']   : '';
 
-		if ( $dept_key || $veh || $ir_key ) {
+		if ( $dept_key || $veh || $ir_key || '' !== $notes ) {
 			$lines[] = '';
 			$lines[] = __( '— Internal —', 'nt-alerts' );
 			if ( $dept_key ) {
@@ -141,6 +142,10 @@ final class NT_Alerts_Notifications {
 			if ( $ir_key ) {
 				$ir_label = isset( $internal_labels[ $ir_key ] ) ? $internal_labels[ $ir_key ] : ucfirst( str_replace( '_', ' ', $ir_key ) );
 				$lines[] = __( 'Maintenance reason:', 'nt-alerts' ) . ' ' . $ir_label;
+			}
+			if ( '' !== $notes ) {
+				$lines[] = __( 'Notes:', 'nt-alerts' );
+				$lines[] = $notes;
 			}
 		}
 

@@ -111,6 +111,10 @@ final class NT_Alerts_Alert {
 		if ( '' !== $ir ) {
 			$data['internal_reason'] = $ir;
 		}
+		$notes = (string) get_post_meta( $post->ID, 'internal_notes', true );
+		if ( '' !== $notes ) {
+			$data['internal_notes'] = $notes;
+		}
 
 		return $data;
 	}
@@ -166,6 +170,9 @@ final class NT_Alerts_Alert {
 		}
 		if ( $request->has_param( 'internal_reason' ) ) {
 			$meta['internal_reason'] = NT_Alerts_CPT::sanitize_enum_internal_reason( (string) $request->get_param( 'internal_reason' ) );
+		}
+		if ( $request->has_param( 'internal_notes' ) ) {
+			$meta['internal_notes'] = sanitize_textarea_field( (string) $request->get_param( 'internal_notes' ) );
 		}
 		if ( $request->has_param( 'images' ) ) {
 			$meta['images'] = NT_Alerts_CPT::sanitize_image_ids( (array) $request->get_param( 'images' ) );

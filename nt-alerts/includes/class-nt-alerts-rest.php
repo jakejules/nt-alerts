@@ -132,6 +132,7 @@ final class NT_Alerts_REST {
 				'type' => 'string',
 				'enum' => array_merge( array( '' ), NT_Alerts_CPT::INTERNAL_REASONS ),
 			),
+			'internal_notes'  => array( 'type' => 'string' ),
 			'images' => array(
 				'type'  => 'array',
 				'items' => array( 'type' => 'integer' ),

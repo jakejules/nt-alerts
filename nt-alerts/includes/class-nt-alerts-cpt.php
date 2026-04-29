@@ -182,6 +182,14 @@ final class NT_Alerts_CPT {
 			'auth_callback'     => $auth,
 		) );
 
+		register_post_meta( NT_ALERTS_CPT, 'internal_notes', array(
+			'type'              => 'string',
+			'single'            => true,
+			'show_in_rest'      => false,
+			'sanitize_callback' => 'sanitize_textarea_field',
+			'auth_callback'     => $auth,
+		) );
+
 		register_post_meta( NT_ALERTS_CPT, 'images', array(
 			'type'              => 'array',
 			'single'            => true,

@@ -366,6 +366,15 @@
 	margin-left: 0;
 }
 
+.nt-alerts-card__internal-notes {
+	flex-basis: 100%;
+	margin: 0.25rem 0 0;
+	white-space: pre-wrap;
+	word-wrap: break-word;
+	font-size: 0.85rem;
+	color: #463810;
+}
+
 .nt-alerts-card__actions {
 	display: flex;
 	flex-wrap: wrap;

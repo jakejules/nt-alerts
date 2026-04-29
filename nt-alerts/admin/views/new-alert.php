@@ -273,6 +273,15 @@ $submit_label  = $is_edit ? __( 'Save changes', 'nt-alerts' ) : __( 'Post Alert'
 			</p>
 
 			<div class="nt-new-form__field">
+				<label for="nt-internal-notes"><?php esc_html_e( 'Notes', 'nt-alerts' ); ?></label>
+				<textarea id="nt-internal-notes"
+				          name="internal_notes"
+				          rows="3"
+				          maxlength="1000"
+				          placeholder="<?php esc_attr_e( 'Context for staff only — visible on the dashboard and in the email log.', 'nt-alerts' ); ?>"></textarea>
+			</div>
+
+			<div class="nt-new-form__field">
 				<span id="nt-dept-legend" class="nt-new-form__field-label"><?php esc_html_e( 'Department responsible', 'nt-alerts' ); ?></span>
 				<div class="nt-new-form__choices nt-new-form__choices--small" role="radiogroup" aria-labelledby="nt-dept-legend">
 					<button type="button"

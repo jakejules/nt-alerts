@@ -202,7 +202,8 @@ function nt_alerts_render_card( $alert, $show_actions ) {
 		$dept_key = isset( $alert['dept_responsible'] ) ? $alert['dept_responsible'] : '';
 		$vehicle  = isset( $alert['vehicle_number'] )  ? $alert['vehicle_number']  : '';
 		$ir_key   = isset( $alert['internal_reason'] ) ? $alert['internal_reason'] : '';
-		if ( $dept_key || $vehicle || $ir_key ) : ?>
+		$notes    = isset( $alert['internal_notes'] )  ? $alert['internal_notes']  : '';
+		if ( $dept_key || $vehicle || $ir_key || '' !== $notes ) : ?>
 			<aside class="nt-alerts-card__internal" aria-label="<?php esc_attr_e( 'Internal information', 'nt-alerts' ); ?>">
 				<span class="nt-internal-badge"><?php esc_html_e( 'Internal', 'nt-alerts' ); ?></span>
 				<?php if ( $dept_key && isset( $dept_labels[ $dept_key ] ) ) : ?>
@@ -213,6 +214,12 @@ function nt_alerts_render_card( $alert, $show_actions ) {
 				<?php endif; ?>
 				<?php if ( $ir_key && isset( $internal_reason_labels[ $ir_key ] ) ) : ?>
 					<span><strong><?php esc_html_e( 'Reason:', 'nt-alerts' ); ?></strong> <?php echo esc_html( $internal_reason_labels[ $ir_key ] ); ?></span>
+				<?php endif; ?>
+				<?php if ( '' !== $notes ) : ?>
+					<p class="nt-alerts-card__internal-notes">
+						<strong><?php esc_html_e( 'Notes:', 'nt-alerts' ); ?></strong>
+						<?php echo nl2br( esc_html( $notes ) ); ?>
+					</p>
 				<?php endif; ?>
 			</aside>
 		<?php endif; ?>
