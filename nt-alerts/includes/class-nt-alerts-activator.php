@@ -27,6 +27,35 @@ final class NT_Alerts_Activator {
 			self::migrate_route_groups();
 			update_option( 'nt_alerts_routes_split_v2', '1' );
 		}
+		if ( '1' !== (string) get_option( 'nt_alerts_routes_fort_erie_rename', '' ) ) {
+			self::rename_route_group( 'Fort Erie / Port Colborne', 'Fort Erie' );
+			update_option( 'nt_alerts_routes_fort_erie_rename', '1' );
+		}
+	}
+
+	/**
+	 * Rename a group in the routes catalogue from $from to $to. No-op if
+	 * no group has that name. Preserves all other groups and per-route data.
+	 */
+	private static function rename_route_group( $from, $to ) {
+		$catalogue = get_option( 'nt_alerts_routes', null );
+		if ( ! is_array( $catalogue ) || empty( $catalogue ) ) {
+			return;
+		}
+		$changed = false;
+		foreach ( $catalogue as &$group ) {
+			if ( is_array( $group ) && isset( $group['group'] ) && (string) $group['group'] === $from ) {
+				$group['group'] = $to;
+				$changed = true;
+			}
+		}
+		unset( $group );
+		if ( $changed ) {
+			update_option( 'nt_alerts_routes', $catalogue );
+			if ( class_exists( 'NT_Alerts_Alert' ) ) {
+				NT_Alerts_Alert::flush_routes_lookup();
+			}
+		}
 	}
 
 	/**
@@ -71,7 +100,7 @@ final class NT_Alerts_Activator {
 
 			if ( ! empty( $fort ) ) {
 				$out[] = array(
-					'group'  => __( 'Fort Erie / Port Colborne', 'nt-alerts' ),
+					'group'  => __( 'Fort Erie', 'nt-alerts' ),
 					'routes' => $fort,
 				);
 			}
@@ -284,7 +313,7 @@ final class NT_Alerts_Activator {
 			),
 
 			array(
-				'group'  => __( 'Fort Erie / Port Colborne', 'nt-alerts' ),
+				'group'  => __( 'Fort Erie', 'nt-alerts' ),
 				'routes' => array(
 					array( 'id' => '22',  'label' => 'Route 22 — Fort Erie Link',          'color' => '#db5e2c' ),
 					array( 'id' => '25',  'label' => 'Route 25 — Port Colborne Link',      'color' => '#ffffff' ),
