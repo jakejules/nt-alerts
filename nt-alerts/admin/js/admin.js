@@ -382,26 +382,49 @@
 			});
 		}
 
-		// Duration: default to "custom" with the existing end_time pre-filled.
-		// (Presets are computed from "now", which would shorten the alert.)
-		formState.duration = 'custom';
+		// Duration: long-term alerts stay long-term; everything else falls
+		// back to "custom" with the existing end_time pre-filled. (Short-term
+		// presets are computed from "now", which would shorten the alert.)
+		var pad = function (n) { return String(n).padStart(2, '0'); };
+		var isLongTerm = data.alert_type === 'long_term';
+		formState.duration = isLongTerm ? 'long_term' : 'custom';
 		formState.userPickedDuration = true;
 		form.querySelectorAll('.nt-choice--duration').forEach(function (b) {
-			b.setAttribute('aria-checked', b.getAttribute('data-duration') === 'custom' ? 'true' : 'false');
+			b.setAttribute('aria-checked', b.getAttribute('data-duration') === formState.duration ? 'true' : 'false');
 		});
-		var customEl = document.getElementById('nt-custom-end');
-		if (customEl && data.expires_at) {
-			// datetime-local needs YYYY-MM-DDTHH:mm with no timezone suffix.
-			var d = new Date(data.expires_at);
-			if (!isNaN(d.getTime())) {
-				var pad = function (n) { return String(n).padStart(2, '0'); };
-				customEl.value = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) +
-					'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+
+		if (isLongTerm) {
+			var startEl = document.getElementById('nt-long-term-start');
+			if (startEl && data.start_time) {
+				var ds = new Date(data.start_time);
+				if (!isNaN(ds.getTime())) {
+					startEl.value = ds.getFullYear() + '-' + pad(ds.getMonth() + 1) + '-' + pad(ds.getDate());
+				}
+			}
+			var ltEndEl = document.getElementById('nt-long-term-end');
+			if (ltEndEl && data.expires_at) {
+				var de = new Date(data.expires_at);
+				if (!isNaN(de.getTime())) {
+					ltEndEl.value = de.getFullYear() + '-' + pad(de.getMonth() + 1) + '-' + pad(de.getDate());
+				}
+			}
+		} else {
+			var customEl = document.getElementById('nt-custom-end');
+			if (customEl && data.expires_at) {
+				// datetime-local needs YYYY-MM-DDTHH:mm with no timezone suffix.
+				var d = new Date(data.expires_at);
+				if (!isNaN(d.getTime())) {
+					customEl.value = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) +
+						'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+				}
 			}
 		}
-		// Show the custom picker (since duration is now 'custom').
+
+		// Show the matching duration-detail panel.
 		document.querySelectorAll('.nt-new-form__duration-detail').forEach(function (el) {
-			if (el.getAttribute('data-role') === 'custom') el.removeAttribute('hidden');
+			var role = el.getAttribute('data-role');
+			var match = (isLongTerm && role === 'long-term') || (!isLongTerm && role === 'custom');
+			if (match) el.removeAttribute('hidden');
 			else el.setAttribute('hidden', '');
 		});
 
