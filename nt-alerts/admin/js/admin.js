@@ -941,6 +941,15 @@
 		var internalReason = (dept === 'maintenance') ? (formState.internalReason || '') : '';
 		var internalNotes = notesEl ? notesEl.value.trim() : '';
 
+		var start = now;
+		if (alertType === 'long_term') {
+			var startEl = document.getElementById('nt-long-term-start');
+			if (startEl && startEl.value) {
+				var ds = new Date(startEl.value + 'T00:00:00');
+				if (!isNaN(ds.getTime())) start = ds;
+			}
+		}
+
 		return {
 			alert_type:       alertType,
 			category:         formState.category,
@@ -948,7 +957,7 @@
 			routes:           formState.routes.slice(),
 			title:            (titleEl ? titleEl.value : '').trim(),
 			description:      descEl ? descEl.value.trim() : '',
-			start_time:       now.toISOString(),
+			start_time:       start.toISOString(),
 			end_time:         end ? end.toISOString() : '',
 			reason:           formState.reason || '',
 			closed_stops:     formState.closedStops.slice(),

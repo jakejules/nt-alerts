@@ -138,6 +138,9 @@ $submit_label  = $is_edit ? __( 'Save changes', 'nt-alerts' ) : __( 'Post Alert'
 			</div>
 
 			<div class="nt-new-form__duration-detail" data-role="long-term" hidden>
+				<label for="nt-long-term-start"><?php esc_html_e( 'Start date (optional, defaults to today)', 'nt-alerts' ); ?></label>
+				<input type="date" id="nt-long-term-start" name="long_term_start">
+
 				<label for="nt-long-term-end"><?php esc_html_e( 'Expected end date (optional)', 'nt-alerts' ); ?></label>
 				<input type="date" id="nt-long-term-end" name="long_term_end">
 			</div>
