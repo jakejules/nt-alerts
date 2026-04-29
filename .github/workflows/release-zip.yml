@@ -1,0 +1,39 @@
+name: Build plugin ZIP
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build nt-alerts.zip
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          zip -r nt-alerts.zip nt-alerts \
+            -x 'nt-alerts/.*' \
+            -x '*.DS_Store'
+
+      - name: Publish "latest" release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Latest plugin build
+          body: |
+            Always-current build of the NT Service Alerts plugin from `main`.
+
+            **Install:** download `nt-alerts.zip` below, then in WordPress go to
+            **Plugins → Add New → Upload Plugin** and pick the file.
+
+            Built from commit ${{ github.sha }}.
+          files: nt-alerts.zip
+          prerelease: false
+          make_latest: true
