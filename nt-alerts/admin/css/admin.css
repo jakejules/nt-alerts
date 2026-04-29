@@ -375,6 +375,59 @@
 	color: #463810;
 }
 
+.nt-alerts-card__dates {
+	display: flex;
+	align-items: stretch;
+	gap: 0.75rem;
+	margin: 0.5rem 0 0.75rem;
+	padding: 0.65rem 0.85rem;
+	background: #eef4fb;
+	border: 1px solid #c8dbef;
+	border-radius: 6px;
+}
+
+.nt-alerts-card__date {
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 0;
+	min-width: 0;
+}
+
+.nt-alerts-card__date-label {
+	font-size: 0.7rem;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	font-weight: 600;
+	color: #4a6a8c;
+	margin-bottom: 0.15rem;
+}
+
+.nt-alerts-card__date-value {
+	font-size: 1.05rem;
+	font-weight: 700;
+	color: #1a2a3a;
+	line-height: 1.25;
+}
+
+.nt-alerts-card__date-value--open {
+	font-style: italic;
+	font-weight: 600;
+	color: #5a6a7a;
+}
+
+.nt-alerts-card__date-arrow {
+	align-self: center;
+	font-size: 1.1rem;
+	color: #6a8aae;
+	font-weight: 700;
+}
+
+@media (max-width: 480px) {
+	.nt-alerts-card__date-value {
+		font-size: 0.95rem;
+	}
+}
+
 .nt-alerts-card__actions {
 	display: flex;
 	flex-wrap: wrap;
