@@ -31,6 +31,81 @@ final class NT_Alerts_Activator {
 			self::rename_route_group( 'Fort Erie / Port Colborne', 'Fort Erie' );
 			update_option( 'nt_alerts_routes_fort_erie_rename', '1' );
 		}
+		if ( '1' !== (string) get_option( 'nt_alerts_routes_22_25_to_regional', '' ) ) {
+			self::move_routes_between_groups( array( '22', '25' ), 'Fort Erie', 'Regional Bus' );
+			update_option( 'nt_alerts_routes_22_25_to_regional', '1' );
+		}
+	}
+
+	/**
+	 * Move a list of route IDs out of $from_group and into $to_group.
+	 * Preserves each route's per-route data (label, color, custom fields).
+	 * Creates $to_group if it doesn't exist; if $from_group ends up empty,
+	 * it is left empty (admins can delete it manually if they want).
+	 */
+	private static function move_routes_between_groups( array $route_ids, $from_group, $to_group ) {
+		$catalogue = get_option( 'nt_alerts_routes', null );
+		if ( ! is_array( $catalogue ) || empty( $catalogue ) ) {
+			return;
+		}
+
+		$moved = array();
+		foreach ( $catalogue as &$group ) {
+			if ( ! is_array( $group ) || empty( $group['routes'] ) || ! is_array( $group['routes'] ) ) {
+				continue;
+			}
+			if ( (string) ( isset( $group['group'] ) ? $group['group'] : '' ) !== $from_group ) {
+				continue;
+			}
+			$kept = array();
+			foreach ( $group['routes'] as $r ) {
+				if ( is_array( $r ) && ! empty( $r['id'] ) && in_array( (string) $r['id'], $route_ids, true ) ) {
+					$moved[] = $r;
+				} else {
+					$kept[] = $r;
+				}
+			}
+			$group['routes'] = $kept;
+		}
+		unset( $group );
+
+		if ( empty( $moved ) ) {
+			return;
+		}
+
+		$placed = false;
+		foreach ( $catalogue as &$group ) {
+			if ( is_array( $group ) && (string) ( isset( $group['group'] ) ? $group['group'] : '' ) === $to_group ) {
+				$existing = isset( $group['routes'] ) && is_array( $group['routes'] ) ? $group['routes'] : array();
+				$known_ids = array();
+				foreach ( $existing as $r ) {
+					if ( is_array( $r ) && ! empty( $r['id'] ) ) {
+						$known_ids[ (string) $r['id'] ] = true;
+					}
+				}
+				foreach ( $moved as $r ) {
+					if ( empty( $known_ids[ (string) $r['id'] ] ) ) {
+						$existing[] = $r;
+					}
+				}
+				$group['routes'] = $existing;
+				$placed = true;
+				break;
+			}
+		}
+		unset( $group );
+
+		if ( ! $placed ) {
+			$catalogue[] = array(
+				'group'  => $to_group,
+				'routes' => $moved,
+			);
+		}
+
+		update_option( 'nt_alerts_routes', $catalogue );
+		if ( class_exists( 'NT_Alerts_Alert' ) ) {
+			NT_Alerts_Alert::flush_routes_lookup();
+		}
 	}
 
 	/**
@@ -70,7 +145,7 @@ final class NT_Alerts_Activator {
 			return;
 		}
 
-		$fort_erie_ids = array( '22', '25', '751' );
+		$fort_erie_ids = array( '751' );
 		$out           = array();
 		$changed       = false;
 
@@ -315,8 +390,6 @@ final class NT_Alerts_Activator {
 			array(
 				'group'  => __( 'Fort Erie', 'nt-alerts' ),
 				'routes' => array(
-					array( 'id' => '22',  'label' => 'Route 22 — Fort Erie Link',          'color' => '#db5e2c' ),
-					array( 'id' => '25',  'label' => 'Route 25 — Port Colborne Link',      'color' => '#ffffff' ),
 					array( 'id' => '751', 'label' => 'Route 751 — Fort Erie Community Bus','color' => '#007a56' ),
 				),
 			),
@@ -324,6 +397,8 @@ final class NT_Alerts_Activator {
 			array(
 				'group'  => __( 'Regional Bus', 'nt-alerts' ),
 				'routes' => array(
+					array( 'id' => '22',  'label' => 'Route 22 — Fort Erie Link',                              'color' => '#db5e2c' ),
+					array( 'id' => '25',  'label' => 'Route 25 — Port Colborne Link',                          'color' => '#ffffff' ),
 					array( 'id' => '34',  'label' => 'Route 34 — Niagara College Campus Link',                'color' => '#943734' ),
 					array( 'id' => '40',  'label' => 'Route 40 — Niagara College NOTL Campus',                'color' => '#4f809e' ),
 					array( 'id' => '45',  'label' => 'Route 45 — Niagara College NOTL Campus',                'color' => '#4f809e' ),
