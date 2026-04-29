@@ -8,7 +8,6 @@ final class NT_Alerts_Activator {
 	public static function activate() {
 		self::ensure_role_and_caps();
 		self::seed_options();
-		self::seed_sample_alerts();
 
 		if ( class_exists( 'NT_Alerts_Cron' ) ) {
 			NT_Alerts_Cron::schedule_all();
@@ -104,116 +103,6 @@ final class NT_Alerts_Activator {
 			'reduced_service' => 'rest_of_day',
 			'other'           => '2h',
 		);
-	}
-
-	/**
-	 * Seed three demo alerts so the REST endpoint and the embed script
-	 * have something to render before the admin UI (step 4+) lands.
-	 * Idempotent: skips if any nt_alert posts already exist.
-	 */
-	private static function seed_sample_alerts() {
-		$counts = wp_count_posts( NT_ALERTS_CPT );
-		$existing = 0;
-		if ( is_object( $counts ) ) {
-			foreach ( $counts as $state => $n ) {
-				unset( $state );
-				$existing += (int) $n;
-			}
-		}
-		if ( $existing > 0 ) {
-			return;
-		}
-
-		$author_id = self::pick_seed_author();
-		$now_ts    = time();
-		$now_iso   = gmdate( 'c', $now_ts );
-
-		$end_of_day = strtotime( 'today 23:59:59', $now_ts );
-		if ( false === $end_of_day ) {
-			$end_of_day = $now_ts + 8 * HOUR_IN_SECONDS;
-		}
-
-		$samples = array(
-			array(
-				'title' => __( 'Detour on Route 301', 'nt-alerts' ),
-				'meta'  => array(
-					'alert_type'   => 'short_term',
-					'category'     => 'detour',
-					'severity'     => 'warning',
-					'routes'       => array( '301' ),
-					'description'  => __( 'Turning via Geneva Street due to Queen Street closure.', 'nt-alerts' ),
-					'status'       => 'active',
-					'start_time'   => $now_iso,
-					'end_time'     => gmdate( 'c', $now_ts + 2 * HOUR_IN_SECONDS ),
-					'last_updated' => $now_iso,
-				),
-			),
-			array(
-				'title' => __( 'Reduced service on hilly routes', 'nt-alerts' ),
-				'meta'  => array(
-					'alert_type'   => 'short_term',
-					'category'     => 'reduced_service',
-					'severity'     => 'warning',
-					'routes'       => array( '301', '302', '501', '116' ),
-					'reason'       => 'weather',
-					'description'  => __( 'Reduced service on hilly routes due to winter weather.', 'nt-alerts' ),
-					'status'       => 'active',
-					'start_time'   => $now_iso,
-					'end_time'     => gmdate( 'c', $end_of_day ),
-					'last_updated' => $now_iso,
-				),
-			),
-			array(
-				'title' => __( 'Main Street construction detour', 'nt-alerts' ),
-				'meta'  => array(
-					'alert_type'   => 'long_term',
-					'category'     => 'detour',
-					'severity'     => 'info',
-					'routes'       => array( '301', '302', '306' ),
-					'description'  => __( 'Westbound routes divert via King Street through end of summer.', 'nt-alerts' ),
-					'status'       => 'active',
-					'start_time'   => gmdate( 'c', $now_ts - DAY_IN_SECONDS ),
-					'end_time'     => gmdate( 'c', $now_ts + 90 * DAY_IN_SECONDS ),
-					'last_updated' => $now_iso,
-					'details_url'  => 'https://niagaratransit.ca/alerts/sample',
-				),
-			),
-		);
-
-		foreach ( $samples as $sample ) {
-			$post_id = wp_insert_post( array(
-				'post_type'   => NT_ALERTS_CPT,
-				'post_status' => 'publish',
-				'post_title'  => $sample['title'],
-				'post_author' => $author_id,
-			), true );
-
-			if ( is_wp_error( $post_id ) || ! $post_id ) {
-				continue;
-			}
-
-			foreach ( $sample['meta'] as $key => $value ) {
-				update_post_meta( $post_id, $key, $value );
-			}
-		}
-	}
-
-	private static function pick_seed_author() {
-		if ( function_exists( 'wp_get_current_user' ) ) {
-			$current = wp_get_current_user();
-			if ( $current && $current->ID ) {
-				return (int) $current->ID;
-			}
-		}
-		$admins = get_users( array(
-			'role'   => 'administrator',
-			'number' => 1,
-			'fields' => 'ID',
-		) );
-		if ( ! empty( $admins ) ) {
-			return (int) $admins[0];
-		}
-		return 1;
 	}
 
 	/**
